@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📈 하락률별 성공률 분석 | Stock Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <style>
+        :root {
+            --primary-color: #4a69bd;
+            --light-primary-color: #eaf0ff;
+            --secondary-color: #f6f8fa;
+            --text-color: #333;
+            --light-text-color: #6c757d;
+            --border-color: #e9ecef;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --warning-color: #ffc107;
+            --card-shadow: 0 4px 25px rgba(0, 0, 0, 0.05);
+            --card-radius: 12px;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+        }
+
+        .navbar {
+            background-color: white !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--primary-color) !important;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            color: var(--light-text-color);
+            transition: all 0.3s;
+            border-radius: 8px;
+            padding: 10px 20px !important;
+        }
+
+        .nav-link.active,
+        .nav-link:hover {
+            background-color: var(--light-primary-color);
+            color: var(--primary-color);
+        }
+
+        .main-container {
+            max-width: 1200px;
+            margin-top: 40px;
+            margin-bottom: 40px;
+        }
+
+        .analyzer-card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+        }
+
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px var(--light-primary-color);
+        }
+
+        .submit-btn {
+            background-color: var(--primary-color);
+            border: none;
+            padding: 15px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .submit-btn:hover {
+            background-color: #3b5998;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 15px rgba(74, 105, 189, 0.2);
+        }
+
+        /* 자동완성 관련 CSS 제거 */
+        /*
+        #autocomplete-list {
+            border-radius: var(--card-radius);
+            box-shadow: var(--card-shadow);
+            border: none;
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .list-group-item-action:focus,
+        .list-group-item-action:hover {
+            background-color: var(--light-primary-color);
+            color: var(--primary-color);
+        }
+        */
+
+        .table-container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: var(--card-radius);
+            box-shadow: var(--card-shadow);
+            margin-top: 2rem;
+        }
+
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table thead th {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            font-weight: 600;
+            border: none;
+            padding: 15px 10px;
+            font-size: 14px;
+        }
+
+        .table tbody td {
+            vertical-align: middle;
+            padding: 12px 10px;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .table tbody tr:hover {
+            background-color: var(--light-primary-color);
+        }
+
+        .success-rate-cell {
+            font-weight: 600;
+        }
+
+        .success-rate-high {
+            color: var(--success-color);
+            background-color: rgba(40, 167, 69, 0.1);
+        }
+
+        .success-rate-medium {
+            color: var(--warning-color);
+            background-color: rgba(255, 193, 7, 0.1);
+        }
+
+        .success-rate-low {
+            color: var(--danger-color);
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+
+        .drawdown-cell {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner-border {
+            color: var(--primary-color);
+        }
+
+        .current-info {
+            background: linear-gradient(135deg, var(--light-primary-color), #f8f9fa);
+            padding: 20px;
+            border-radius: var(--card-radius);
+            margin-bottom: 20px;
+        }
+
+        .current-price {
+            font-size: 1.2em;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .current-drawdown {
+            font-size: 1.1em;
+            font-weight: 600;
+        }
+
+        .current-drawdown.positive {
+            color: var(--success-color);
+        }
+
+        .current-drawdown.negative {
+            color: var(--danger-color);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid main-container">
+            <a class="navbar-brand" href="/">📈 Stock Analyzer</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">하락 후 상승 분석</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/distribution">연도별 하락 횟수</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/drawdown">하락 돌파 종목</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/success-rate">하락률별 성공률</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container main-container">
+        <div class="analyzer-card">
+            <h2 class="text-center mb-1">📊 하락률별 성공률 분석</h2>
+            <p class="text-center text-secondary mb-5">하락률 구간별로 목표 상승률 달성 확률을 종합 분석합니다.</p>
+
+            <form id="analysis-form" class="row g-4 position-relative">
+                <div class="col-md-6 position-relative">
+                    <label class="form-label">종목 티커 (예: AAPL)</label>
+                    <input type="text" name="ticker" id="ticker-input" class="form-control" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label">목표 상승률 (%)</label>
+                    <input type="number" name="target" step="0.1" class="form-control" required placeholder="e.g. 20"
+                        value="20">
+                </div>
+                <div class="col-12 text-center mt-5">
+                    <button type="submit" class="btn btn-primary w-50 submit-btn">분석 시작</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner-border" role="status"></div>
+            <p class="mt-3">분석 중입니다... 잠시만 기다려주세요.</p>
+        </div>
+
+        <div id="result-section" style="display: none;">
+            <div class="current-info">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-chart-line"></i> <span id="ticker-name"></span></h5>
+                        <p class="mb-1">현재 종가: <span class="current-price" id="current-price">-</span></p>
+                        <p class="mb-0">52주 고점: <span id="current-high">-</span></p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <p class="mb-1">현재 하락률: <span class="current-drawdown" id="current-drawdown">-</span></p>
+                        <p class="mb-0">목표 상승률: <span id="target-rate">-</span>%</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-container">
+                <h4 class="mb-4 text-center">📈 하락률별 성공률 분석 결과</h4>
+                <div class="table-responsive">
+                    <table class="table table-borderless">
+                        <thead>
+                            <tr>
+                                <th>하락률</th>
+                                <th>성공률</th>
+                                <th>성공 횟수</th>
+                                <th>실패 횟수</th>
+                                <th>총 발생 횟수</th>
+                                <th>평균 달성일</th>
+                            </tr>
+                        </thead>
+                        <tbody id="result-tbody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="error-section" class="alert alert-danger mt-4" style="display: none;">
+            <i class="fas fa-exclamation-triangle"></i> <span id="error-message"></span>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 자동완성 관련 JavaScript 제거
+        /*
+        const input = document.getElementById('ticker-input');
+        const list = document.getElementById('autocomplete-list');
+
+        async function showSuggestions(query = '') {
+            try {
+                const res = await fetch(`/search?q=${query}`);
+                const data = await res.json();
+
+                list.innerHTML = '';
+                data.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'list-group-item list-group-item-action';
+                    li.style.cursor = 'pointer';
+                    li.textContent = `${item.symbol} (${item.name}) - ${item.rank}위`;
+                    li.addEventListener('click', () => {
+                        input.value = item.symbol;
+                        list.innerHTML = '';
+                    });
+                    list.appendChild(li);
+                });
+            } catch (error) {
+                console.error("Autocomplete fetch error:", error);
+            }
+        }
+
+        input.addEventListener('focus', () => showSuggestions(input.value.trim()));
+        input.addEventListener('input', () => showSuggestions(input.value.trim()));
+
+        document.addEventListener('click', (e) => {
+            if (!input.contains(e.target)) {
+                list.innerHTML = '';
+            }
+        });
+        */
+
+        // 분석 함수 (실제 API 호출로 변경)
+        async function analyzeDrawdownSuccess(ticker, targetRate) {
+            const response = await fetch('/api/analyze-success-rate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ticker: ticker, target: targetRate }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || '분석 중 알 수 없는 오류가 발생했습니다.');
+            }
+
+            return response.json();
+        }
+
+        // 성공률에 따른 클래스 반환
+        function getSuccessRateClass(rate) {
+            if (rate >= 70) return 'success-rate-high';
+            if (rate >= 40) return 'success-rate-medium';
+            return 'success-rate-low';
+        }
+
+        // 결과 테이블 생성
+        function displayResults(data) {
+            document.getElementById('ticker-name').textContent = data.ticker;
+            document.getElementById('current-price').textContent = `$${data.currentPrice}`;
+            document.getElementById('current-high').textContent = `$${data.currentHigh}`;
+            document.getElementById('target-rate').textContent = data.targetRate;
+
+            const currentDrawdown = parseFloat(data.currentDrawdown);
+            const drawdownElement = document.getElementById('current-drawdown');
+            drawdownElement.textContent = `${data.currentDrawdown}%`;
+            drawdownElement.className = `current-drawdown ${currentDrawdown >= 0 ? 'positive' : 'negative'}`;
+
+            const tbody = document.getElementById('result-tbody');
+            tbody.innerHTML = '';
+
+            data.results.forEach(row => {
+                const tr = document.createElement('tr');
+                const successRateClass = getSuccessRateClass(row.successRate);
+
+                tr.innerHTML = `
+                    <td class="drawdown-cell">-${row.drawdown}%</td>
+                    <td class="success-rate-cell ${successRateClass}">${row.successRate}%</td>
+                    <td>${row.successCases}</td>
+                    <td>${row.failureCases}</td>
+                    <td>${row.totalCases}</td>
+                    <td>${row.avgDays ? row.avgDays + '일' : '-'}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('result-section').style.display = 'block';
+        }
+
+        // 폼 제출 처리
+        document.getElementById('analysis-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const ticker = document.querySelector('input[name="ticker"]').value.trim();
+            const target = parseFloat(document.querySelector('input[name="target"]').value);
+
+            if (!ticker || !target) {
+                document.getElementById('error-message').textContent = '모든 필드를 입력해주세요.';
+                document.getElementById('error-section').style.display = 'block';
+                return;
+            }
+
+            // UI 초기화
+            document.getElementById('error-section').style.display = 'none';
+            document.getElementById('result-section').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+
+            try {
+                const data = await analyzeDrawdownSuccess(ticker, target);
+                document.getElementById('loading').style.display = 'none';
+                displayResults(data);
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error-message').textContent = '분석 중 오류가 발생했습니다. 다시 시도해주세요.';
+                document.getElementById('error-section').style.display = 'block';
+            }
+        });
+    </script>
+</body>
+
+</html>

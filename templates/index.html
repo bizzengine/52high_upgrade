@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>주식 분석기</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h1,
+        h2 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        form {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        form input[type="text"],
+        form input[type="number"] {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            margin-right: -1px;
+        }
+
+        form input[name="stock_symbol"] {
+            border-radius: 5px 0 0 5px;
+            width: 200px;
+        }
+
+        form input[name="target_increase_pct"] {
+            width: 80px;
+            text-align: right;
+        }
+
+        form button {
+            padding: 12px 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 0 5px 5px 0;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        form button:hover {
+            background-color: #2980b9;
+        }
+
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin-right: 10px;
+        }
+
+        .form-group label {
+            margin-right: 5px;
+            font-size: 16px;
+            color: #555;
+        }
+
+        .error {
+            color: #e74c3c;
+            text-align: center;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .stock-info {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #ecf0f1;
+            border-radius: 8px;
+            border-left: 5px solid #3498db;
+        }
+
+        .stock-info p {
+            margin: 8px 0;
+            font-size: 17px;
+        }
+
+        .stock-info strong {
+            color: #2c3e50;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 12px 15px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #3498db;
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f8f8;
+        }
+
+        tr:hover {
+            background-color: #f0f0f0;
+        }
+
+        .current-price-row {
+            background-color: #d1ecf1;
+            font-weight: bold;
+            color: #0c5460;
+        }
+
+        .current-price-row td {
+            border-bottom: 2px solid #3498db;
+        }
+
+        .max-drop-row {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        .max-drop-row td {
+            border-bottom: 2px solid #e74c3c;
+        }
+
+        .footnote {
+            margin-top: 40px;
+            font-size: 14px;
+            color: #777;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .footnote strong {
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>주식 하락률 분석기</h1>
+        <form action="/analyze_stock" method="post">
+            <div class="form-group">
+                <input type="text" name="stock_symbol" placeholder="종목 심볼 (예: AAPL)" required>
+            </div>
+            <div class="form-group">
+                <label for="target_increase_pct">목표 상승률 (%):</label>
+                <input type="number" id="target_increase_pct" name="target_increase_pct" value="3" min="1" max="100"
+                    step="1" required>
+            </div>
+            <button type="submit">분석</button>
+        </form>
+
+        {% if error %}
+        <p class="error">{{ error }}</p>
+        {% endif %}
+
+        {% if stock_symbol %}
+        <div class="stock-info">
+            <h2>{{ stock_name }} ({{ stock_symbol }}) 분석 결과</h2>
+            <p><strong>52주 신고점:</strong> {{ "%.2f"|format(high_52_week) }}</p>
+            <p><strong>현재가:</strong> {{ "%.2f"|format(current_price) }}</p>
+            <p><strong>목표 상승률:</strong> {{ "%.0f"|format(target_increase_pct) }}%</p>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>하락률 (%)</th>
+                    <th>목표 가격</th>
+                    <th>성공률 (%)</th>
+                    <th>성공 횟수</th>
+                    <th>실패 횟수</th>
+                    <th>총 발생 횟수</th>
+                    <th>평균 달성일 (거래일)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for level in price_levels %}
+                <tr {% if level.is_current %}class="current-price-row" {% elif level.is_max_drop_1_year
+                    %}class="max-drop-row" {% endif %}>
+                    <td>
+                        {% if level.is_current %}
+                        현재하락률: {{ "%.2f"|format(level.percent_drop) }}
+                        {% elif level.is_max_drop_1_year %}
+                        올해 최저하락률: {{ "%.2f"|format(level.percent_drop) }}
+                        {% else %}
+                        {{ "%.0f"|format(level.percent_drop) }}
+                        {% endif %}
+                    </td>
+                    <td>{{ "%.2f"|format(level.target_price) }}</td>
+                    <td>{{ "%.1f"|format(level.successRate) if level.successRate is not none else 'N/A' }}</td>
+                    <td>{{ level.successCases if level.successCases is not none else 'N/A' }}</td>
+                    <td>{{ level.failureCases if level.failureCases is not none else 'N/A' }}</td>
+                    <td>{{ level.totalCases if level.totalCases is not none else 'N/A' }}</td>
+                    <td>{{ "%.1f"|format(level.avgDays) if level.avgDays is not none else 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p class="footnote">
+            <strong>참고:</strong><br>
+            - '하락률'은 52주 신고점 대비 가격 하락률을 나타냅니다.<br>
+            - '현재가' 줄은 현재 주가의 52주 신고점 대비 하락률과 해당 가격을 표시합니다.<br>
+            - '올해 최저가' 줄은 52주 신고점 대비 연초 이후 최저 종가의 하락률과 해당 가격을 표시합니다.<br>
+            - <strong>성공률 분석은 특정 하락률 도달 후 입력한 목표 상승률({{ "%.0f"|format(target_increase_pct) }}%)을 252 거래일(약 1년) 내에 달성했는지
+                여부를 기준으로 합니다.</strong><br>
+            - 성공률, 성공 횟수, 실패 횟수, 총 발생 횟수, 평균 달성일은 과거 데이터를 기반으로 한 통계이며 미래 성과를 보장하지 않습니다.
+        </p>
+        {% endif %}
+    </div>
+</body>
+
+</html>
