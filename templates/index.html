@@ -174,14 +174,16 @@
 <body>
     <div class="container">
         <h1>주식 하락률 분석기</h1>
-        <form action="/analyze_stock" method="post">
+        <form action="/" method="post">
             <div class="form-group">
-                <input type="text" name="stock_symbol" placeholder="종목 심볼 (예: AAPL)" required>
+                <input type="text" name="stock_symbol" placeholder="종목 심볼 (예: AAPL)" required
+                    value="{{ stock_symbol if stock_symbol else '' }}">
             </div>
             <div class="form-group">
                 <label for="target_increase_pct">목표 상승률 (%):</label>
-                <input type="number" id="target_increase_pct" name="target_increase_pct" value="3" min="1" max="100"
-                    step="1" required>
+                <input type="number" id="target_increase_pct" name="target_increase_pct"
+                    value="{{ '%.0f'|format(target_increase_pct) if target_increase_pct is not none else '3' }}" min="1"
+                    max="100" step="1" required>
             </div>
             <button type="submit">분석</button>
         </form>
@@ -190,8 +192,7 @@
         <p class="error">{{ error }}</p>
         {% endif %}
 
-        {% if stock_symbol %}
-        <div class="stock-info">
+        {% if stock_symbol and not error %} <div class="stock-info">
             <h2>{{ stock_name }} ({{ stock_symbol }}) 분석 결과</h2>
             <p><strong>52주 신고점:</strong> {{ "%.2f"|format(high_52_week) }}</p>
             <p><strong>현재가:</strong> {{ "%.2f"|format(current_price) }}</p>
@@ -216,7 +217,7 @@
                     %}class="max-drop-row" {% endif %}>
                     <td>
                         {% if level.is_current %}
-                        현재하락률: {{ "%.2f"|format(level.percent_drop) }}
+                        현재 하락률: {{ "%.2f"|format(level.percent_drop) }}
                         {% elif level.is_max_drop_1_year %}
                         올해 최저하락률: {{ "%.2f"|format(level.percent_drop) }}
                         {% else %}
