@@ -354,6 +354,24 @@
                 <div class="stat-title">목표 상승률</div>
                 <div class="stat-value">{{ "%.0f"|format(target_increase_pct) }}%</div>
             </div>
+            {% if operating_income_formatted %}
+            <div class="stat-card">
+                <div class="stat-title">최근 영업이익</div>
+                <div class="stat-value">${{ operating_income_formatted }}</div>
+            </div>
+            {% endif %}
+            {% if net_income_formatted %}
+            <div class="stat-card">
+                <div class="stat-title">최근 순이익</div>
+                <div class="stat-value">${{ net_income_formatted }}</div>
+            </div>
+            {% endif %}
+            {% if latest_quarter_date_formatted %}
+            <div class="stat-card">
+                <div class="stat-title">재무 데이터 기준일</div>
+                <div class="stat-value">{{ latest_quarter_date_formatted }}</div>
+            </div>
+            {% endif %}
         </div>
 
         <div class="table-container">

@@ -6,15 +6,35 @@ import numpy as np
 
 app = Flask(__name__)
 
-@app.route('/', methods=['GET', 'POST']) # GET과 POST 요청 모두 처리
+def format_financial_number(value):
+    """재무 수치를 적절한 단위로 포맷팅"""
+    if pd.isna(value) or value is None:
+        return None
+    
+    abs_value = abs(value)
+    if abs_value >= 1_000_000_000:
+        return f"{value / 1_000_000_000:.2f}B"
+    elif abs_value >= 1_000_000:
+        return f"{value / 1_000_000:.2f}M"
+    elif abs_value >= 1_000:
+        return f"{value / 1_000:.2f}K"
+    else:
+        return f"{value:.2f}"
+
+@app.route('/', methods=['GET', 'POST'])
 def index():
     stock_name = None
     stock_symbol = None
     high_52_week = None
     current_price = None
-    target_increase_pct = 3 # 기본값
+    target_increase_pct = 3
     price_levels_to_display = []
     error = None
+    operating_income = None
+    net_income = None
+    operating_income_formatted = None
+    net_income_formatted = None
+    latest_quarter_date_formatted = None # 추가된 변수
 
     if request.method == 'POST':
         stock_symbol = request.form.get('stock_symbol', '').upper()
@@ -29,7 +49,7 @@ def index():
         except Exception as e:
             error = f"목표 상승률 처리 중 오류가 발생했습니다: {e}"
 
-        if not error: # 목표 상승률에 오류가 없으면 주식 분석 진행
+        if not error:
             start_date = '2020-01-01'
 
             try:
@@ -44,7 +64,7 @@ def index():
                 if df.empty:
                     error = f"'{stock_symbol}' 종목의 데이터를 찾을 수 없거나 데이터가 부족합니다. 심볼을 확인해주세요."
                 
-                if not error: # 데이터 로드에 오류가 없으면 계속 진행
+                if not error:
                     if len(df) >= 252:
                         high_52_week = df['High'].tail(252).max()
                     else:
@@ -56,11 +76,34 @@ def index():
                     stock_info = ticker.info
                     stock_name = stock_info.get('longName', stock_symbol)
 
+                    # 재무 데이터 가져오기
+                    try:
+                        financials = ticker.quarterly_financials # 분기 데이터로 변경
+                        if not financials.empty:
+                            latest_quarter_date = financials.columns[0] # 가장 최근 분기 종료일
+                            
+                            # 날짜 포맷팅 (예: YYYY-MM-DD)
+                            latest_quarter_date_formatted = latest_quarter_date.strftime('%Y-%m-%d')
+                            
+                            # 영업이익 (Operating Income)
+                            if 'Operating Income' in financials.index:
+                                operating_income = financials.loc['Operating Income', latest_quarter_date]
+                                operating_income_formatted = format_financial_number(operating_income)
+                            
+                            # 순이익 (Net Income)
+                            if 'Net Income' in financials.index:
+                                net_income = financials.loc['Net Income', latest_quarter_date]
+                                net_income_formatted = format_financial_number(net_income)
+                                
+                    except Exception as e:
+                        print(f"재무 데이터 가져오기 실패: {e}")
+                        # 재무 데이터를 가져오지 못해도 주식 분석은 계속 진행
+
             except Exception as e:
                 print(f"Error fetching data for {stock_symbol}: {e}")
                 error = f"데이터를 가져오는 중 오류가 발생했습니다: {e}. 정확한 종목 심볼을 입력했는지 확인해주세요."
 
-        if not error: # 주식 데이터 로드에 오류가 없으면 분석 진행
+        if not error:
             actual_percent_drop = (1 - current_price / high_52_week) * 100
 
             try:
@@ -80,7 +123,7 @@ def index():
                 max_drop_1_year_val = 0
                 max_drop_1_year_price = high_52_week
 
-            # ====== 추가.py의 성공률 분석 로직 통합 시작 ======
+            # 성공률 분석 로직
             df_for_analysis = df.copy()
             df_for_analysis['52W_High_Analysis'] = df_for_analysis['High'].rolling(window=252, min_periods=1).max()
             df_for_analysis['Drawdown_Analysis'] = (df_for_analysis['Close'] - df_for_analysis['52W_High_Analysis']) / df_for_analysis['52W_High_Analysis']
@@ -88,7 +131,7 @@ def index():
 
             success_analysis_data = {} 
 
-            for drawdown_pct_val in range(5, 95, 5): # 5, 10, ..., 90
+            for drawdown_pct_val in range(5, 95, 5):
                 drawdown_threshold = -drawdown_pct_val / 100
 
                 buy_points = df_for_analysis[
@@ -133,7 +176,6 @@ def index():
                     'totalCases': total_cases,
                     'avgDays': round(avg_days, 1) if avg_days else None
                 }
-            # ====== 추가.py의 성공률 분석 로직 통합 끝 ======
 
             standard_price_levels = [{
                 "percent_drop": 0,
@@ -198,7 +240,7 @@ def index():
 
             price_levels_to_display.sort(key=lambda x: x['percent_drop'])
             
-            # target_increase_pct를 100을 곱하여 템플릿에 전달 (퍼센트 형식으로)
+            # target_increase_pct를 100을 곱하여 템플릿에 전달
             target_increase_pct = target_increase_pct * 100
 
     return render_template('index.html',
@@ -208,11 +250,14 @@ def index():
                            current_price=current_price,
                            target_increase_pct=target_increase_pct,
                            price_levels=price_levels_to_display,
+                           operating_income_formatted=operating_income_formatted,
+                           net_income_formatted=net_income_formatted,
+                           latest_quarter_date_formatted=latest_quarter_date_formatted, # 추가
                            error=error)
 
 @app.route('/search_stock', methods=['GET'])
 def search_stock():
-    return jsonify([])  # 자동 완성 비활성화
+    return jsonify([])
 
 if __name__ == '__main__':
     app.run(debug=True, port=7000)
