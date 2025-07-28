@@ -397,7 +397,7 @@
                                 {% if level.is_current %}
                                 현재 하락률: {{ "%.2f"|format(level.percent_drop) }}
                                 {% elif level.is_max_drop_1_year %}
-                                52주 전저점 하락률: {{ "%.2f"|format(level.percent_drop) }}
+                                올해 최저하락률: {{ "%.2f"|format(level.percent_drop) }}
                                 {% else %}
                                 {{ "%.0f"|format(level.percent_drop) }}
                                 {% endif %}
@@ -420,7 +420,7 @@
             <ul style="margin-top: 15px;">
                 <li><strong>하락률:</strong> 52주 신고점 대비 가격 하락률을 나타냅니다.</li>
                 <li><strong>현재가 행:</strong> 현재 주가의 52주 신고점 대비 하락률과 해당 가격을 표시합니다.</li>
-                <li><strong>52주 전저점 행:</strong> 52주 신고점 대비 52주 이내 최저 종가의 하락률과 해당 가격을 표시합니다.</li>
+                <li><strong>올해 최저가 행:</strong> 52주 신고점 대비 연초 이후 최저 종가의 하락률과 해당 가격을 표시합니다.</li>
                 <li><strong>성공률 분석:</strong> 특정 하락률 도달 후 입력한 목표 상승률({{ "%.0f"|format(target_increase_pct) }}%)을 252
                     거래일(약 1년) 내에 달성했는지 여부를 기준으로 합니다.</li>
                 <li><strong>주의사항:</strong> 성공률, 성공 횟수, 실패 횟수, 총 발생 횟수, 평균 달성일은 과거 데이터를 기반으로 한 통계이며 미래 성과를 보장하지 않습니다.
