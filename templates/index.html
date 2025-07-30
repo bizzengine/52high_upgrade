@@ -42,7 +42,9 @@
         .main-container {
             max-width: 900px;
             margin: 0 auto;
-            margin-top: 30px;
+            /* 기존 margin-top 삭제 */
+            padding-top: 100px;
+            /* 기존 타이틀 높이 + 고정될 종목명 높이 예상치 (조정 필요) */
         }
 
         .navbar-brand {
@@ -50,8 +52,67 @@
             color: var(--primary-color);
             font-size: 2rem;
             text-align: center;
-            margin-bottom: 30px;
             display: block;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--card-bg-color);
+            z-index: 1000;
+            padding: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand:hover {
+            color: #3B5998;
+            transform: translateY(-1px);
+        }
+
+        /* 새로 추가될 고정 종목 정보 영역 스타일 */
+        .fixed-stock-info {
+            position: fixed;
+            top: 80px;
+            /* navbar-brand 아래에 위치하도록 (navbar-brand 높이 + 간격) */
+            left: 0;
+            width: 100%;
+            background-color: var(--primary-color);
+            /* 배경색 지정 */
+            color: white;
+            /* 글자색 흰색 */
+            text-align: center;
+            padding: 10px 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+            z-index: 999;
+            /* navbar-brand 보다는 아래, 다른 내용보다는 위에 */
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            /* 내부 요소 중앙 정렬용 */
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            /* 아이콘과 텍스트 사이 간격 */
+        }
+
+        .fixed-stock-info span {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        .fixed-stock-info .stock-name-display {
+            /* 종목명 텍스트 스타일 */
+            font-size: 1.5rem;
+            /* 더 크게 */
+            font-weight: 700;
+        }
+
+        .fixed-stock-info .stock-symbol-display {
+            font-size: 1rem;
+            opacity: 0.8;
         }
 
         .analyzer-card {
@@ -84,6 +145,7 @@
             display: flex;
             flex-direction: column;
             min-width: 200px;
+            position: relative;
         }
 
         .form-label {
@@ -106,6 +168,60 @@
             border-color: var(--primary-color);
             box-shadow: 0 0 0 0.25rem rgba(85, 119, 176, 0.25);
             outline: none;
+        }
+
+        /* 자동완성 드롭다운 스타일 */
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid var(--border-color);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .autocomplete-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid #f8f9fa;
+        }
+
+        .autocomplete-item:hover,
+        .autocomplete-item.selected {
+            background-color: var(--secondary-bg-color);
+        }
+
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+
+        .symbol-text {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .company-name {
+            font-size: 0.9rem;
+            color: var(--muted-text-color);
+            margin-left: 8px;
+        }
+
+        .rank-text {
+            font-size: 0.85rem;
+            color: #888;
+            margin-left: auto;
+            /* Push rank to the right */
+            padding: 2px 8px;
+            background-color: var(--header-bg-neutral);
+            border-radius: 5px;
         }
 
         .submit-btn {
@@ -246,6 +362,18 @@
             background-color: #f1b0b7 !important;
         }
 
+        .this-year-min-row {
+            /* New style for this year's minimum */
+            background-color: #ffeeba !important;
+            font-weight: 600;
+            color: #856404;
+        }
+
+        .this-year-min-row:hover {
+            background-color: #ffda79 !important;
+        }
+
+
         .footnote {
             background-color: var(--card-bg-color);
             padding: 25px;
@@ -300,24 +428,53 @@
             .navbar-brand {
                 font-size: 1.7rem;
             }
+
+            .fixed-stock-info {
+                font-size: 1.1rem;
+                /* 모바일에서 글자 크기 조정 */
+                padding: 8px 0;
+            }
+
+            .fixed-stock-info .stock-name-display {
+                font-size: 1.3rem;
+            }
+
+            .fixed-stock-info .stock-symbol-display {
+                font-size: 0.9rem;
+            }
+
+            .main-container {
+                padding-top: 150px;
+                /* 모바일에서 고정 헤더 높이 조정 */
+            }
         }
     </style>
 </head>
 
 <body>
     <div class="main-container">
-        <h1 class="navbar-brand">
+        <h1 class="navbar-brand" onclick="resetForm()">
             <i class="fas fa-chart-line"></i> 주식 하락률 분석기
         </h1>
 
+        {% if stock_symbol and not error %}
+        <div class="fixed-stock-info">
+            <i class="fas fa-chart-area"></i>
+            <span class="stock-name-display">{{ stock_name }}</span>
+            <span class="stock-symbol-display">({{ stock_symbol }})</span>
+        </div>
+        {% endif %}
+
         <div class="analyzer-card">
             <h2>주식 분석</h2>
-            <form action="/" method="post">
+            <form action="/" method="post" id="stockAnalysisForm">
                 <div class="form-container">
                     <div class="form-group">
                         <label class="form-label" for="stock_symbol">종목 심볼</label>
                         <input type="text" class="form-control" id="stock_symbol" name="stock_symbol"
-                            placeholder="예: AAPL" required value="{{ stock_symbol if stock_symbol else '' }}">
+                            placeholder="예: AAPL" required value="{{ stock_symbol if stock_symbol else '' }}"
+                            autocomplete="off">
+                        <div class="autocomplete-dropdown" id="autocomplete-dropdown"></div>
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="target_increase_pct">목표 상승률 (%)</label>
@@ -325,9 +482,9 @@
                             value="{{ '%.0f'|format(target_increase_pct) if target_increase_pct is not none else '3' }}"
                             min="1" max="100" step="1" required>
                     </div>
-                    <button type="submit" class="submit-btn">
-                        <i class="fas fa-search"></i>
-                        분석
+                    <button type="submit" class="submit-btn" id="analyzeButton">
+                        <i class="fas fa-search" id="analyzeIcon"></i>
+                        <span id="analyzeText">분석</span>
                     </button>
                 </div>
             </form>
@@ -392,12 +549,15 @@
                     <tbody>
                         {% for level in price_levels %}
                         <tr {% if level.is_current %}class="current-price-row" {% elif level.is_max_drop_1_year
-                            %}class="max-drop-row" {% endif %}>
+                            %}class="max-drop-row" {% elif level.is_max_drop_this_year %}class="this-year-min-row" {%
+                            endif %}>
                             <td>
                                 {% if level.is_current %}
                                 현재 하락률: {{ "%.2f"|format(level.percent_drop) }}
                                 {% elif level.is_max_drop_1_year %}
                                 52주 전저점 하락률: {{ "%.2f"|format(level.percent_drop) }}
+                                {% elif level.is_max_drop_this_year %}
+                                올해 최저 하락률: {{ "%.2f"|format(level.percent_drop) }}
                                 {% else %}
                                 {{ "%.0f"|format(level.percent_drop) }}
                                 {% endif %}
@@ -421,6 +581,7 @@
                 <li><strong>하락률:</strong> 52주 신고점 대비 가격 하락률을 나타냅니다.</li>
                 <li><strong>현재가 행:</strong> 현재 주가의 52주 신고점 대비 하락률과 해당 가격을 표시합니다.</li>
                 <li><strong>52주 전저점 행:</strong> 52주 신고점 대비 52주 이내 최저 종가의 하락률과 해당 가격을 표시합니다.</li>
+                <li><strong>올해 최저 하락률 행:</strong> 52주 신고점 대비 올해 최저 종가의 하락률과 해당 가격을 표시합니다.</li>
                 <li><strong>성공률 분석:</strong> 특정 하락률 도달 후 입력한 목표 상승률({{ "%.0f"|format(target_increase_pct) }}%)을 252
                     거래일(약 1년) 내에 달성했는지 여부를 기준으로 합니다.</li>
                 <li><strong>주의사항:</strong> 성공률, 성공 횟수, 실패 횟수, 총 발생 횟수, 평균 달성일은 과거 데이터를 기반으로 한 통계이며 미래 성과를 보장하지 않습니다.
@@ -429,6 +590,158 @@
         </div>
         {% endif %}
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const stockSymbolInput = document.getElementById('stock_symbol');
+            const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
+            const analyzeButton = document.getElementById('analyzeButton');
+            const analyzeIcon = document.getElementById('analyzeIcon');
+            const analyzeText = document.getElementById('analyzeText');
+            const stockAnalysisForm = document.getElementById('stockAnalysisForm');
+
+            let searchTimeout;
+            let currentFocus = -1;
+            let suggestions = [];
+
+            // 자동 완성 기능
+            stockSymbolInput.addEventListener('input', function () {
+                clearTimeout(searchTimeout);
+                const query = this.value.trim().toUpperCase();
+                currentFocus = -1;
+
+                if (query.length < 1) {
+                    hideDropdown();
+                    return;
+                }
+
+                searchTimeout = setTimeout(() => {
+                    fetch(`/search_stock?query=${encodeURIComponent(query)}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            suggestions = data;
+                            showSuggestions(data);
+                        })
+                        .catch(error => {
+                            console.error('Error fetching stock suggestions:', error);
+                            hideDropdown();
+                        });
+                }, 200);
+            });
+
+            // 키보드 네비게이션
+            stockSymbolInput.addEventListener('keydown', function (e) {
+                const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    currentFocus++;
+                    if (currentFocus >= items.length) currentFocus = 0;
+                    setActiveItem(items);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    currentFocus--;
+                    if (currentFocus < 0) currentFocus = items.length - 1;
+                    setActiveItem(items);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (currentFocus > -1 && items[currentFocus]) {
+                        selectItem(suggestions[currentFocus]);
+                    }
+                } else if (e.key === 'Escape') {
+                    hideDropdown();
+                    this.blur();
+                }
+            });
+
+            // 외부 클릭 시 드롭다운 숨기기
+            document.addEventListener('click', function (e) {
+                if (!stockSymbolInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
+                    hideDropdown();
+                }
+            });
+
+            function showSuggestions(data) {
+                if (data.length === 0) {
+                    hideDropdown();
+                    return;
+                }
+
+                autocompleteDropdown.innerHTML = '';
+
+                data.slice(0, 8).forEach((item, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'autocomplete-item';
+                    div.innerHTML = `
+                        <span class="symbol-text">${item.symbol}</span>
+                        <span class="company-name">${item.name}</span>
+                        <span class="rank-text">Rank: ${item.rank}</span>
+                    `;
+
+                    div.addEventListener('click', function () {
+                        selectItem(item);
+                    });
+
+                    div.addEventListener('mouseenter', function () {
+                        currentFocus = index;
+                        setActiveItem(autocompleteDropdown.querySelectorAll('.autocomplete-item'));
+                    });
+
+                    autocompleteDropdown.appendChild(div);
+                });
+
+                autocompleteDropdown.style.display = 'block';
+            }
+
+            function hideDropdown() {
+                autocompleteDropdown.style.display = 'none';
+                currentFocus = -1;
+            }
+
+            function selectItem(item) {
+                stockSymbolInput.value = item.symbol;
+                hideDropdown();
+                stockSymbolInput.focus();
+            }
+
+            function setActiveItem(items) {
+                items.forEach((item, index) => {
+                    if (index === currentFocus) {
+                        item.classList.add('selected');
+                    } else {
+                        item.classList.remove('selected');
+                    }
+                });
+            }
+
+            // 분석 중 표시 기능
+            stockAnalysisForm.addEventListener('submit', function () {
+                analyzeButton.disabled = true;
+                analyzeText.textContent = '분석 중...';
+                analyzeIcon.classList.remove('fa-search');
+                analyzeIcon.classList.add('fa-spinner', 'fa-spin');
+            });
+        });
+
+        // 기본화면으로 돌아가는 함수
+        function resetForm() {
+            // 폼 리셋
+            document.getElementById('stockAnalysisForm').reset();
+            document.getElementById('stock_symbol').value = '';
+            document.getElementById('target_increase_pct').value = '3';
+
+            // 자동완성 드롭다운 숨기기
+            document.getElementById('autocomplete-dropdown').style.display = 'none';
+
+            // 페이지 새로고침 (결과 테이블 등 제거)
+            window.location.href = '/';
+        }
+    </script>
 </body>
 
 </html>
