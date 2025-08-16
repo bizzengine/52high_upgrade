@@ -4,27 +4,42 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>주식 분석기</title>
+    <title>주식 하락률 분석기</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&display=swap"
+        rel="stylesheet">
     <style>
-        /* Modern CSS Variables */
+        /* Variables for more refined colors */
         :root {
-            --primary-color: #5577B0;
-            --secondary-bg-color: #f8f9fa;
+            --primary-color: #3182F6;
+            /* 토스 시그니처 블루에 가까운 색 */
+            --secondary-bg-color: #f7f9fc;
+            /* 배경색을 좀 더 밝고 부드럽게 */
             --card-bg-color: #ffffff;
-            --text-color: #333;
+            --text-color: #212529;
+            /* 기본 텍스트 색상을 더 진하게 */
             --muted-text-color: #6c757d;
-            --border-color: #dee2e6;
-            --header-bg-neutral: #f0f0f0;
-            --table-header-text-color: var(--text-color);
+            --border-color: #e9ecef;
+            --header-bg-neutral: #f1f3f5;
+            /* 테이블 헤더 배경색을 더 밝게 */
             --success-color: #28a745;
             --warning-color: #ffc107;
             --danger-color: #dc3545;
             --info-color: #17a2b8;
+            --accent-light-blue: #e3f2fd;
+            /* 강조색 팔레트 조정 */
+            --accent-light-red: #fde6e8;
+            --accent-light-yellow: #fff3cd;
+            --shadow-light: 0 4px 12px rgba(0, 0, 0, 0.05);
+            /* 그림자 부드럽게 */
+            --spacing-lg: 30px;
+            --spacing-md: 20px;
+            --spacing-sm: 15px;
         }
 
+        /* Base Styles */
         * {
             margin: 0;
             padding: 0;
@@ -32,31 +47,24 @@
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Poppins', 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            /* 한글 폰트 추가 */
             background-color: var(--secondary-bg-color);
             color: var(--text-color);
             line-height: 1.6;
-            padding: 20px;
+            padding: var(--spacing-md);
         }
 
         .main-container {
-            max-width: 900px;
+            max-width: 720px;
+            /* 토스처럼 중앙에 좀 더 좁게 배치 */
             margin: 0 auto;
-            /* 기존 margin-top 삭제 */
-            padding-top: 100px;
-            /* 기존 타이틀 높이 + 고정될 종목명 높이 예상치 (조정 필요) */
+            padding-top: 120px;
+            /* 고정 헤더 높이 고려 */
         }
 
-        .navbar-brand {
-            font-weight: 700;
-            color: var(--primary-color);
-            font-size: 2rem;
-            text-align: center;
-            display: block;
-            text-decoration: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-
+        /* --- Header & Navigation --- */
+        .app-header {
             position: fixed;
             top: 0;
             left: 0;
@@ -64,50 +72,54 @@
             background-color: var(--card-bg-color);
             z-index: 1000;
             padding: 20px 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-light);
+            text-align: center;
         }
 
-        .navbar-brand:hover {
+        .app-title {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            /* 제목 크기 약간 줄여 간결하게 */
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .app-title:hover {
             color: #3B5998;
             transform: translateY(-1px);
         }
 
-        /* 새로 추가될 고정 종목 정보 영역 스타일 */
+        /* Fixed Stock Info Bar */
         .fixed-stock-info {
             position: fixed;
-            top: 80px;
-            /* navbar-brand 아래에 위치하도록 (navbar-brand 높이 + 간격) */
+            top: 70px;
+            /* 헤더가 좁아졌으므로 top 조정 */
             left: 0;
             width: 100%;
             background-color: var(--primary-color);
-            /* 배경색 지정 */
             color: white;
-            /* 글자색 흰색 */
             text-align: center;
-            padding: 10px 0;
-            font-size: 1.3rem;
+            padding: 8px 0;
+            /* 패딩 줄여 컴팩트하게 */
+            font-size: 1.2rem;
             font-weight: 600;
             z-index: 999;
-            /* navbar-brand 보다는 아래, 다른 내용보다는 위에 */
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-light);
             display: flex;
-            /* 내부 요소 중앙 정렬용 */
             justify-content: center;
             align-items: center;
             gap: 10px;
-            /* 아이콘과 텍스트 사이 간격 */
-        }
-
-        .fixed-stock-info span {
-            display: inline-block;
-            vertical-align: middle;
         }
 
         .fixed-stock-info .stock-name-display {
-            /* 종목명 텍스트 스타일 */
-            font-size: 1.5rem;
-            /* 더 크게 */
-            font-weight: 700;
+            font-size: 1.4rem;
+            font-weight: 600;
+            /* 너무 두껍지 않게 */
         }
 
         .fixed-stock-info .stock-symbol-display {
@@ -115,49 +127,66 @@
             opacity: 0.8;
         }
 
-        .analyzer-card {
+        /* --- Card Styles --- */
+        .card {
             background-color: var(--card-bg-color);
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: var(--spacing-lg);
+            /* 내부 패딩 증가 */
+            border-radius: 12px;
+            /* 모서리 둥글기 약간 조절 */
+            box-shadow: var(--shadow-light);
             margin-bottom: 25px;
-            border: 1px solid var(--border-color);
+            border: none;
+            /* 토스는 테두리 없는 경우가 많음 */
         }
 
-        .analyzer-card h2 {
+        .card-title {
             font-weight: 600;
-            margin-bottom: 25px;
-            color: var(--primary-color);
+            margin-bottom: var(--spacing-lg);
+            color: var(--text-color);
+            /* 제목 색상 통일 */
             text-align: center;
-            font-size: 1.5rem;
+            font-size: 1.6rem;
+            /* 카드 제목 크기 조정 */
         }
 
+        /* --- Form Styles --- */
         .form-container {
             display: flex;
             justify-content: center;
-            align-items: end;
-            flex-wrap: wrap;
-            gap: 15px;
+            align-items: stretch;
+            /* 전체 너비 사용 */
+            flex-direction: column;
+            /* 세로 정렬 */
+            gap: var(--spacing-sm);
+            /* 간격 줄임 */
             margin-bottom: 30px;
         }
 
         .form-group {
             display: flex;
             flex-direction: column;
-            min-width: 200px;
+            min-width: unset;
+            /* 최소 너비 제한 해제 */
+            width: 100%;
+            /* 전체 너비 사용 */
             position: relative;
+            /* For autocomplete dropdown */
         }
 
         .form-label {
             font-weight: 500;
-            margin-bottom: 8px;
-            color: var(--text-color);
-            font-size: 0.95rem;
+            margin-bottom: 4px;
+            /* 라벨과 입력 필드 간격 좁힘 */
+            color: var(--muted-text-color);
+            /* 라벨 색상을 연하게 */
+            font-size: 0.9rem;
         }
 
         .form-control {
             border-radius: 8px;
-            padding: 12px 15px;
+            padding: 14px 16px;
+            /* 패딩 늘려 터치 영역 확보 */
             border: 1px solid var(--border-color);
             font-size: 1rem;
             transition: all 0.2s ease;
@@ -166,11 +195,12 @@
 
         .form-control:focus {
             border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.25rem rgba(85, 119, 176, 0.25);
+            box-shadow: 0 0 0 3px rgba(49, 130, 246, 0.2);
+            /* 포커스 아웃라인 강화 */
             outline: none;
         }
 
-        /* 자동완성 드롭다운 스타일 */
+        /* Autocomplete Dropdown */
         .autocomplete-dropdown {
             position: absolute;
             top: 100%;
@@ -179,19 +209,22 @@
             background: white;
             border: 1px solid var(--border-color);
             border-top: none;
-            border-radius: 0 0 8px 8px;
+            border-radius: 8px;
+            /* 드롭다운도 둥글게 */
             max-height: 200px;
             overflow-y: auto;
             z-index: 1000;
             display: none;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: var(--shadow-light);
         }
 
         .autocomplete-item {
-            padding: 12px 15px;
+            padding: 12px 16px;
             cursor: pointer;
             transition: background-color 0.2s ease;
             border-bottom: 1px solid #f8f9fa;
+            display: flex;
+            align-items: center;
         }
 
         .autocomplete-item:hover,
@@ -218,7 +251,6 @@
             font-size: 0.85rem;
             color: #888;
             margin-left: auto;
-            /* Push rank to the right */
             padding: 2px 8px;
             background-color: var(--header-bg-neutral);
             border-radius: 5px;
@@ -227,17 +259,24 @@
         .submit-btn {
             background-color: var(--primary-color);
             border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
+            padding: 15px 25px;
+            /* 버튼 패딩 늘림 */
+            border-radius: 10px;
+            /* 버튼 둥글기 증가 */
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 1.1rem;
+            /* 버튼 폰트 키움 */
             color: white;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
             height: fit-content;
+            /* Adjusts height to content */
+            margin-top: var(--spacing-sm);
+            /* 상단 마진 추가 */
         }
 
         .submit-btn:hover {
@@ -249,101 +288,120 @@
             transform: translateY(0);
         }
 
-        .error {
+        /* --- Message Styles --- */
+        .message-box {
             color: var(--danger-color);
             text-align: center;
             margin: 20px 0;
             font-weight: 500;
-            padding: 15px;
-            background-color: #f8d7da;
+            padding: 15px 20px;
+            /* 패딩 조정 */
+            background-color: var(--accent-light-red);
             border: 1px solid #f5c6cb;
             border-radius: 8px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            /* 간격 조정 */
         }
 
+        /* --- Stats Container --- */
         .stats-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            /* 최소 너비 줄여 더 유연하게 */
+            gap: var(--spacing-sm);
+            /* 간격 좁힘 */
             margin-bottom: 25px;
         }
 
         .stat-card {
-            background-color: var(--card-bg-color);
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            border: 1px solid var(--border-color);
+            padding: var(--spacing-md);
+            border-radius: 12px;
+            box-shadow: var(--shadow-light);
+            border: none;
             text-align: center;
+            background-color: var(--card-bg-color);
         }
 
         .stat-card .stat-title {
-            font-size: 0.95rem;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
             color: var(--muted-text-color);
-            margin-bottom: 8px;
             font-weight: 500;
         }
 
         .stat-card .stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
+            font-size: 1.3rem;
+            /* 스탯 값 크기 약간 줄임 */
+            font-weight: 600;
             color: var(--primary-color);
         }
 
+        /* --- Table Styles --- */
         .table-container {
             background-color: var(--card-bg-color);
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: var(--spacing-lg);
+            border-radius: 12px;
+            box-shadow: var(--shadow-light);
             margin-bottom: 25px;
-            border: 1px solid var(--border-color);
+            border: none;
             overflow-x: auto;
+            /* For responsive tables */
         }
 
         .table-container h5 {
-            margin-bottom: 20px;
+            margin-bottom: var(--spacing-md);
             font-weight: 600;
-            color: var(--primary-color);
-            font-size: 1.2rem;
+            color: var(--text-color);
+            font-size: 1.3rem;
+            /* 테이블 제목 크기 키움 */
         }
 
-        .table {
+        .data-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 0;
         }
 
-        .table thead th {
+        .data-table thead th {
             background-color: var(--header-bg-neutral);
-            color: var(--table-header-text-color);
+            color: var(--muted-text-color);
+            /* 헤더 텍스트 색상을 연하게 */
             font-weight: 600;
             border-bottom: 2px solid var(--border-color);
-            padding: 12px 15px;
+            padding: 14px 10px;
+            /* 헤더 패딩 조정 */
             text-align: center;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
 
-        .table tbody tr {
+        .data-table tbody tr {
             transition: background-color 0.2s ease-in-out;
         }
 
-        .table tbody tr:hover {
+        .data-table tbody tr:hover {
             background-color: var(--secondary-bg-color);
         }
 
-        .table tbody tr:nth-child(even) {
+        .data-table tbody tr:nth-child(even) {
             background-color: #fafafa;
         }
 
-        .table tbody td {
-            padding: 12px 15px;
+        .data-table tbody td {
+            padding: 12px 10px;
+            /* 바디 패딩 조정 */
             vertical-align: middle;
             border-top: 1px solid var(--border-color);
             text-align: center;
             font-size: 0.9rem;
         }
 
+        /* Specific row highlights */
         .current-price-row {
-            background-color: #d1ecf1 !important;
+            background-color: var(--accent-light-blue) !important;
             font-weight: 600;
             color: #0c5460;
         }
@@ -353,7 +411,7 @@
         }
 
         .max-drop-row {
-            background-color: #f8d7da !important;
+            background-color: var(--accent-light-red) !important;
             font-weight: 600;
             color: #721c24;
         }
@@ -363,8 +421,7 @@
         }
 
         .this-year-min-row {
-            /* New style for this year's minimum */
-            background-color: #ffeeba !important;
+            background-color: var(--accent-light-yellow) !important;
             font-weight: 600;
             color: #856404;
         }
@@ -373,36 +430,62 @@
             background-color: #ffda79 !important;
         }
 
-
-        .footnote {
+        /* --- Footnote / Info Section --- */
+        .info-section {
             background-color: var(--card-bg-color);
-            padding: 25px;
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            border: 1px solid var(--border-color);
+            padding: var(--spacing-lg);
+            border-radius: 12px;
+            box-shadow: var(--shadow-light);
+            border: none;
             font-size: 0.9rem;
             color: var(--muted-text-color);
             line-height: 1.6;
         }
 
-        .footnote strong {
+        .info-section strong {
             color: var(--text-color);
             font-weight: 600;
         }
 
-        .footnote ul {
-            margin: 15px 0;
-            padding-left: 20px;
+        .info-section ul {
+            margin: 10px 0;
+            padding-left: 18px;
         }
 
-        .footnote li {
-            margin-bottom: 8px;
+        .info-section li {
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            line-height: 1.5;
         }
 
-        /* Responsive Design */
+        /* --- Responsive Design --- */
         @media (max-width: 768px) {
+            body {
+                padding: var(--spacing-sm);
+            }
+
             .main-container {
-                margin-top: 20px;
+                padding-top: 100px;
+                /* 모바일에서 고정 헤더 높이 조정 */
+            }
+
+            .app-title {
+                font-size: 1.5rem;
+            }
+
+            .fixed-stock-info {
+                font-size: 1rem;
+                padding: 6px 0;
+                top: 60px;
+                /* 모바일에서 고정 정보 바 위치 조정 */
+            }
+
+            .fixed-stock-info .stock-name-display {
+                font-size: 1.2rem;
+            }
+
+            .fixed-stock-info .stock-symbol-display {
+                font-size: 0.85rem;
             }
 
             .form-container {
@@ -418,61 +501,57 @@
                 grid-template-columns: 1fr;
             }
 
-            .analyzer-card,
+            .card,
             .stat-card,
             .table-container,
-            .footnote {
-                padding: 20px;
+            .info-section {
+                padding: var(--spacing-md);
             }
 
-            .navbar-brand {
-                font-size: 1.7rem;
+            .card-title {
+                font-size: 1.4rem;
+                margin-bottom: var(--spacing-md);
             }
 
-            .fixed-stock-info {
-                font-size: 1.1rem;
-                /* 모바일에서 글자 크기 조정 */
-                padding: 8px 0;
+            .submit-btn {
+                padding: 12px 20px;
+                font-size: 1rem;
             }
 
-            .fixed-stock-info .stock-name-display {
-                font-size: 1.3rem;
-            }
 
-            .fixed-stock-info .stock-symbol-display {
-                font-size: 0.9rem;
-            }
-
-            .main-container {
-                padding-top: 150px;
-                /* 모바일에서 고정 헤더 높이 조정 */
+            .data-table thead th,
+            .data-table tbody td {
+                padding: 8px;
+                font-size: 0.8rem;
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="main-container">
-        <h1 class="navbar-brand" onclick="resetForm()">
+    <header class="app-header">
+        <a href="/" class="app-title">
             <i class="fas fa-chart-line"></i> 주식 하락률 분석기
-        </h1>
+        </a>
+    </header>
 
-        {% if stock_symbol and not error %}
-        <div class="fixed-stock-info">
-            <i class="fas fa-chart-area"></i>
-            <span class="stock-name-display">{{ stock_name }}</span>
-            <span class="stock-symbol-display">({{ stock_symbol }})</span>
-        </div>
-        {% endif %}
+    {% if stock_symbol and not error %}
+    <div class="fixed-stock-info">
+        <i class="fas fa-chart-area"></i>
+        <span class="stock-name-display">{{ stock_name }}</span>
+        <span class="stock-symbol-display">({{ stock_symbol }})</span>
+    </div>
+    {% endif %}
 
-        <div class="analyzer-card">
-            <h2>주식 분석</h2>
+    <main class="main-container">
+        <section class="card">
+            <h2 class="card-title">주식 분석</h2>
             <form action="/" method="post" id="stockAnalysisForm">
                 <div class="form-container">
                     <div class="form-group">
                         <label class="form-label" for="stock_symbol">종목 심볼</label>
                         <input type="text" class="form-control" id="stock_symbol" name="stock_symbol"
-                            placeholder="예: AAPL" required value="{{ stock_symbol if stock_symbol else '' }}"
+                            placeholder="예: AAPL 또는 삼성전자" required value="{{ stock_symbol if stock_symbol else '' }}"
                             autocomplete="off">
                         <div class="autocomplete-dropdown" id="autocomplete-dropdown"></div>
                     </div>
@@ -488,17 +567,17 @@
                     </button>
                 </div>
             </form>
-        </div>
+        </section>
 
         {% if error %}
-        <div class="error">
+        <div class="message-box error">
             <i class="fas fa-exclamation-triangle"></i>
             {{ error }}
         </div>
         {% endif %}
 
         {% if stock_symbol and not error %}
-        <div class="stats-container">
+        <section class="stats-container">
             <div class="stat-card">
                 <div class="stat-title">52주 신고점</div>
                 <div class="stat-value">${{ "%.2f"|format(high_52_week) }}</div>
@@ -529,12 +608,12 @@
                 <div class="stat-value">{{ latest_quarter_date_formatted }}</div>
             </div>
             {% endif %}
-        </div>
+        </section>
 
-        <div class="table-container">
+        <section class="table-container">
             <h5><i class="fas fa-table"></i> 분석 결과</h5>
             <div style="overflow-x: auto;">
-                <table class="table">
+                <table class="data-table">
                     <thead>
                         <tr>
                             <th>하락률 (%)</th>
@@ -573,9 +652,9 @@
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
-        <div class="footnote">
+        <section class="info-section">
             <strong><i class="fas fa-info-circle"></i> 참고사항</strong>
             <ul style="margin-top: 15px;">
                 <li><strong>하락률:</strong> 52주 신고점 대비 가격 하락률을 나타냅니다.</li>
@@ -584,15 +663,16 @@
                 <li><strong>올해 최저 하락률 행:</strong> 52주 신고점 대비 올해 최저 종가의 하락률과 해당 가격을 표시합니다.</li>
                 <li><strong>성공률 분석:</strong> 특정 하락률 도달 후 입력한 목표 상승률({{ "%.0f"|format(target_increase_pct) }}%)을 252
                     거래일(약 1년) 내에 달성했는지 여부를 기준으로 합니다.</li>
-                <li><strong>주의사항:</strong> 성공률, 성공 횟수, 실패 횟수, 총 발생 횟수, 평균 달성일은 과거 데이터를 기반으로 한 통계이며 미래 성과를 보장하지 않습니다.
+                <li><strong>주의사항:</strong> 성공률, 성공 횟수, 실패 횟수, 총 발생 횟수, 평균 달성일은 과거 데이터를 기반으로 한 통계이며 미래 성과를 보장하지
+                    않습니다. 이 데이터는 투자 의사결정의 참고 자료로만 활용하시기 바랍니다.
                 </li>
             </ul>
-        </div>
+        </section>
         {% endif %}
-    </div>
+    </main>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', () => {
             const stockSymbolInput = document.getElementById('stock_symbol');
             const autocompleteDropdown = document.getElementById('autocomplete-dropdown');
             const analyzeButton = document.getElementById('analyzeButton');
@@ -604,63 +684,64 @@
             let currentFocus = -1;
             let suggestions = [];
 
-            // 자동 완성 기능
+            // Fetch and display autocomplete suggestions
             stockSymbolInput.addEventListener('input', function () {
                 clearTimeout(searchTimeout);
                 const query = this.value.trim().toUpperCase();
-                currentFocus = -1;
+                currentFocus = -1; // Reset focus when input changes
 
                 if (query.length < 1) {
                     hideDropdown();
                     return;
                 }
 
-                searchTimeout = setTimeout(() => {
-                    fetch(`/search_stock?query=${encodeURIComponent(query)}`)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            suggestions = data;
-                            showSuggestions(data);
-                        })
-                        .catch(error => {
-                            console.error('Error fetching stock suggestions:', error);
-                            hideDropdown();
-                        });
-                }, 200);
+                searchTimeout = setTimeout(async () => {
+                    try {
+                        const response = await fetch(`/search_stock?query=${encodeURIComponent(query)}`);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        suggestions = data; // Store fetched suggestions
+                        showSuggestions(data);
+                    } catch (error) {
+                        console.error('Error fetching stock suggestions:', error);
+                        hideDropdown();
+                    }
+                }, 200); // Debounce search
             });
 
-            // 키보드 네비게이션
+            // Keyboard navigation for autocomplete
             stockSymbolInput.addEventListener('keydown', function (e) {
                 const items = autocompleteDropdown.querySelectorAll('.autocomplete-item');
 
                 if (e.key === 'ArrowDown') {
                     e.preventDefault();
-                    currentFocus++;
-                    if (currentFocus >= items.length) currentFocus = 0;
+                    currentFocus = (currentFocus + 1) % items.length;
                     setActiveItem(items);
+                    scrollIntoView(items[currentFocus]);
                 } else if (e.key === 'ArrowUp') {
                     e.preventDefault();
-                    currentFocus--;
-                    if (currentFocus < 0) currentFocus = items.length - 1;
+                    currentFocus = (currentFocus - 1 + items.length) % items.length;
                     setActiveItem(items);
+                    scrollIntoView(items[currentFocus]);
                 } else if (e.key === 'Enter') {
-                    e.preventDefault();
+                    e.preventDefault(); // Prevent default form submission
                     if (currentFocus > -1 && items[currentFocus]) {
-                        selectItem(suggestions[currentFocus]);
+                        // Simulate click on the selected item
+                        items[currentFocus].click();
+                    } else if (stockSymbolInput.value.trim() !== '') {
+                        // If no item is selected but input has value, submit the form
+                        stockAnalysisForm.submit();
                     }
                 } else if (e.key === 'Escape') {
                     hideDropdown();
-                    this.blur();
+                    this.blur(); // Remove focus from input
                 }
             });
 
-            // 외부 클릭 시 드롭다운 숨기기
-            document.addEventListener('click', function (e) {
+            // Hide dropdown when clicking outside
+            document.addEventListener('click', (e) => {
                 if (!stockSymbolInput.contains(e.target) && !autocompleteDropdown.contains(e.target)) {
                     hideDropdown();
                 }
@@ -672,9 +753,9 @@
                     return;
                 }
 
-                autocompleteDropdown.innerHTML = '';
+                autocompleteDropdown.innerHTML = ''; // Clear previous suggestions
 
-                data.slice(0, 8).forEach((item, index) => {
+                data.slice(0, 8).forEach((item, index) => { // 최대 8개까지만 보여줌
                     const div = document.createElement('div');
                     div.className = 'autocomplete-item';
                     div.innerHTML = `
@@ -706,39 +787,42 @@
             function selectItem(item) {
                 stockSymbolInput.value = item.symbol;
                 hideDropdown();
-                stockSymbolInput.focus();
+                stockSymbolInput.focus(); // Keep focus on input after selection
             }
 
             function setActiveItem(items) {
                 items.forEach((item, index) => {
-                    if (index === currentFocus) {
-                        item.classList.add('selected');
-                    } else {
-                        item.classList.remove('selected');
-                    }
+                    item.classList.toggle('selected', index === currentFocus);
                 });
             }
 
-            // 분석 중 표시 기능
-            stockAnalysisForm.addEventListener('submit', function () {
-                analyzeButton.disabled = true;
+            function scrollIntoView(item) {
+                if (item) {
+                    const dropdownRect = autocompleteDropdown.getBoundingClientRect();
+                    const itemRect = item.getBoundingClientRect();
+
+                    // Check if item is out of view (bottom or top)
+                    if (itemRect.bottom > dropdownRect.bottom) {
+                        autocompleteDropdown.scrollTop += itemRect.bottom - dropdownRect.bottom;
+                    } else if (itemRect.top < dropdownRect.top) {
+                        autocompleteDropdown.scrollTop -= dropdownRect.top - itemRect.top;
+                    }
+                }
+            }
+
+
+            // Handle form submission: Show loading state
+            stockAnalysisForm.addEventListener('submit', () => {
+                analyzeButton.disabled = true; // Disable button to prevent multiple submissions
                 analyzeText.textContent = '분석 중...';
                 analyzeIcon.classList.remove('fa-search');
-                analyzeIcon.classList.add('fa-spinner', 'fa-spin');
+                analyzeIcon.classList.add('fa-spinner', 'fa-spin'); // Show spinner
             });
         });
 
-        // 기본화면으로 돌아가는 함수
+        // Function to reset form and navigate to home
         function resetForm() {
-            // 폼 리셋
-            document.getElementById('stockAnalysisForm').reset();
-            document.getElementById('stock_symbol').value = '';
-            document.getElementById('target_increase_pct').value = '3';
-
-            // 자동완성 드롭다운 숨기기
-            document.getElementById('autocomplete-dropdown').style.display = 'none';
-
-            // 페이지 새로고침 (결과 테이블 등 제거)
+            // This will trigger a full page reload, effectively resetting the form
             window.location.href = '/';
         }
     </script>
